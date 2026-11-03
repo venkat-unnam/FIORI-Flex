@@ -1,11 +1,46 @@
+// const { func } = require("@sap/cds/lib/ql/cds-ql");
+
 sap.ui.define(
     [
-        'sap/fe/core/PageController'
+        'sap/fe/core/PageController',
+        'sap/ui/model/json/JSONModel',
+        'sap/m/MessageToast'
     ],
-    function(PageController) {
+    function (PageController, JSONModel, MessageToast) {
         'use strict';
 
         return PageController.extend('yvui5flex1.ext.view.Main', {
+
+            onAfterRendering: function (oEvent) {
+                var oView = this.getView();
+                var mFBConditions = new JSONModel({
+                    allFilters: "",
+                    expanded: false,
+                    filtersTextInfo: oView.byId("FilterBar").getActiveFiltersText()
+                });
+                oView.setModel(mFBConditions, "fbConditions")
+            },
+
+            handlers: {
+                onTilePress: function () {
+                    MessageToast.show("Tile Pressed");
+                },
+                onFiltersChanged: function (oEvent) {
+                    var oView = this.getView();
+                    var filterBar = oView.byId("FilterBar");
+                    var allFilters = filterBar.getFilters();
+
+                    var oSource = oEvent.getSource();
+                    var mFBConditions = oSource.getModel("fbConditions");
+                    mFBConditions.setProperty("/allFilters", JSON.stringify(allFilters, null, "  "));
+
+                    if (Object.keys(allFilters).length > 0) {
+                        mFBConditions.setProperty("/expanded", true);
+                    }
+                    MessageToast.show("FilterBar filters are changed!");
+                    mFBConditions.setProperty("/filtersTextInfo", oSource.getActiveFiltersText());
+                }
+            }
             /**
              * Called when a controller is instantiated and its View controls (if available) are already created.
              * Can be used to modify the View before it is displayed, to bind event handlers and do other one-time initialization.
