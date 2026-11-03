@@ -129,7 +129,7 @@ class TravelService extends cds.ApplicationService {
     this._update_totals4 = function (travel) {
       return UPDATE(Travel.drafts, travel).with({
         TotalPrice: CXL`coalesce (BookingFee, 0) + ${SELECT`coalesce (sum (FlightPrice + ${SELECT`coalesce (sum (Price),0)`.from(BookingSupplement.drafts).where`to_Booking_BookingUUID = BookingUUID`
-            }),0)`.from(Booking.drafts).where`to_Travel_TravelUUID = TravelUUID`
+          }),0)`.from(Booking.drafts).where`to_Travel_TravelUUID = TravelUUID`
           }`
       })
     }
@@ -219,47 +219,82 @@ class TravelService extends cds.ApplicationService {
     /**
      * Trees-forTickets: Set criticality to highlight green flight status in booking table
      */
+    // async function setCriticality(BookingItems) {
+    //   function _setCriticality(BookingItem, GoGreen) {
+    //     if (GoGreen) {
+    //       BookingItem.criticality = parseInt(3)
+    //     } else {
+    //       BookingItem.criticality = parseInt(0)
+    //     }
+    //   }
+    //   if (BookingItems != null) {
+    //     var TravelTarget
+    //     var BookingTarget
+    //     var IsActiveEntity
+    //     var BookingUUID
+    //     if (Array.isArray(BookingItems) && BookingItems.length > 0) {
+    //       IsActiveEntity = BookingItems[0].IsActiveEntity
+    //       BookingUUID = BookingItems[0].BookingUUID
+    //     } else {
+    //       IsActiveEntity = BookingItems.IsActiveEntity
+    //       BookingUUID = BookingItems.BookingUUID
+    //     }
+    //     if (IsActiveEntity) {
+    //       TravelTarget = Travel
+    //       BookingTarget = Booking
+    //     } else {
+    //       TravelTarget = Travel.drafts
+    //       BookingTarget = Booking.drafts
+    //     }
+
+    //     const { travel } =
+    //       await SELECT.one`to_Travel_TravelUUID as travel`.from(
+    //         BookingTarget,
+    //         BookingUUID
+    //       )
+    //     const [{ GoGreen }] = await cds.read([
+    //       SELECT.one`GoGreen`.from(TravelTarget).where({ TravelUUID: travel }),
+    //     ])
+    //     if (Array.isArray(BookingItems)) {
+    //       BookingItems.forEach((item) => _setCriticality(item, GoGreen))
+    //     } else {
+    //       _setCriticality(BookingItems, GoGreen)
+    //     }
+    //   }
+    // }
     async function setCriticality(BookingItems) {
       function _setCriticality(BookingItem, GoGreen) {
-        if (GoGreen) {
-          BookingItem.criticality = parseInt(3)
-        } else {
-          BookingItem.criticality = parseInt(0)
-        }
+        BookingItem.criticality = GoGreen ? 3 : 0
       }
-      if (BookingItems != null) {
-        var TravelTarget
-        var BookingTarget
-        var IsActiveEntity
-        var BookingUUID
-        if (Array.isArray(BookingItems) && BookingItems.length > 0) {
-          IsActiveEntity = BookingItems[0].IsActiveEntity
-          BookingUUID = BookingItems[0].BookingUUID
-        } else {
-          IsActiveEntity = BookingItems.IsActiveEntity
-          BookingUUID = BookingItems.BookingUUID
-        }
-        if (IsActiveEntity) {
-          TravelTarget = Travel
-          BookingTarget = Booking
-        } else {
-          TravelTarget = Travel.drafts
-          BookingTarget = Booking.drafts
-        }
+      if (BookingItems == null) return
 
-        const { travel } =
-          await SELECT.one`to_Travel_TravelUUID as travel`.from(
-            BookingTarget,
-            BookingUUID
-          )
-        const [{ GoGreen }] = await cds.read([
-          SELECT.one`GoGreen`.from(TravelTarget).where({ TravelUUID: travel }),
-        ])
-        if (Array.isArray(BookingItems)) {
-          BookingItems.forEach((item) => _setCriticality(item, GoGreen))
-        } else {
-          _setCriticality(BookingItems, GoGreen)
-        }
+      const first = Array.isArray(BookingItems) ? BookingItems[0] : BookingItems
+      if (!first) return
+
+      const IsActiveEntity = first.IsActiveEntity
+      const BookingUUID = first.BookingUUID
+      if (!BookingUUID) return // key not selected, nothing to look up
+
+      // treat a missing IsActiveEntity as active; drafts always carry an explicit false
+      const isActive = IsActiveEntity !== false
+      const TravelTarget = isActive ? Travel : Travel.drafts
+      const BookingTarget = isActive ? Booking : Booking.drafts
+
+      const booking = await SELECT.one`to_Travel_TravelUUID as travel`.from(
+        BookingTarget,
+        BookingUUID
+      )
+      if (!booking) return
+
+      const travelRow = await SELECT.one`GoGreen`
+        .from(TravelTarget)
+        .where({ TravelUUID: booking.travel })
+      const GoGreen = travelRow?.GoGreen
+
+      if (Array.isArray(BookingItems)) {
+        BookingItems.forEach((item) => _setCriticality(item, GoGreen))
+      } else {
+        _setCriticality(BookingItems, GoGreen)
       }
     }
 

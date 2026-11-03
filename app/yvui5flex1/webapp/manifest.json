@@ -136,7 +136,14 @@
           "options": {
             "settings": {
               "navigation": {},
-              "contextPath": "/Travel"
+              "contextPath": "/Travel",
+              "controlConfiguration": {
+                "to_Booking/@com.sap.vocabularies.UI.v1.LineItem#Itinerary": {
+                  "tableSettings": {
+                    "type": "ResponsiveTable"
+                  }
+                }
+              }
             }
           },
           "contextPattern": "/Travel({TravelKey})"

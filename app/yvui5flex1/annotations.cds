@@ -1,4 +1,6 @@
 using TravelService as service from '../../srv/travel-service';
+using from '../../db/schema';
+
 annotate service.Travel with @(
     UI.SelectionFields : [
         to_Agency.AgencyID,
@@ -84,5 +86,183 @@ annotate service.Travel with @(
             Label : '{i18n>RejectTravel}',
         },
     ],
+    UI.Facets : [
+        {
+            $Type : 'UI.ReferenceFacet',
+            Label : '{i18n>Travel}',
+            ID : 'i18nTravel',
+            Target : '@UI.FieldGroup#i18nTravel',
+        },
+        {
+            $Type : 'UI.ReferenceFacet',
+            Label : 'Price',
+            ID : 'Price',
+            Target : '@UI.FieldGroup#Price',
+        },
+        {
+            $Type : 'UI.ReferenceFacet',
+            Label : 'Dates',
+            ID : 'Dates',
+            Target : '@UI.FieldGroup#Dates',
+        },
+        {
+            $Type : 'UI.ReferenceFacet',
+            Label : 'Sustainability',
+            ID : 'Sustainability',
+            Target : '@UI.FieldGroup#Sustainability',
+        },
+        {
+            $Type : 'UI.ReferenceFacet',
+            Label : 'Itinerary',
+            ID : 'Itinerary',
+            Target : 'to_Booking/@UI.LineItem#Itinerary',
+        },
+    ],
+    UI.FieldGroup #i18nTravel : {
+        $Type : 'UI.FieldGroupType',
+        Data : [
+            {
+                $Type : 'UI.DataField',
+                Value : TravelID,
+                Label : 'TravelID',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : TravelStatus_code,
+                Label : 'TravelStatus_code',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : to_Agency.AgencyID,
+                Label : 'AgencyID',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : to_Customer.CustomerID,
+                Label : 'CustomerID',
+            },
+        ],
+    },
+    UI.FieldGroup #Price : {
+        $Type : 'UI.FieldGroupType',
+        Data : [
+            {
+                $Type : 'UI.DataField',
+                Value : BookingFee,
+                Label : 'BookingFee',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : TotalPrice,
+                Label : 'TotalPrice',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : CurrencyCode_code,
+            },
+        ],
+    },
+    UI.FieldGroup #Dates : {
+        $Type : 'UI.FieldGroupType',
+        Data : [
+            {
+                $Type : 'UI.DataField',
+                Value : BeginDate,
+                Label : 'BeginDate',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : EndDate,
+                Label : 'EndDate',
+            },
+        ],
+    },
+    UI.FieldGroup #Sustainability : {
+        $Type : 'UI.FieldGroupType',
+        Data : [
+            {
+                $Type : 'UI.DataField',
+                Value : GoGreen,
+                Label : 'GoGreen',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : GreenFee,
+                Label : 'GreenFee',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : TreesPlanted,
+                Label : 'TreesPlanted',
+            },
+        ],
+    },
+);
+
+annotate service.Booking with @(
+    UI.LineItem #Itinerary : [
+        {
+            $Type : 'UI.DataField',
+            Value : to_Carrier.AirlinePicURL,
+            Label : 'AirlinePicURL',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : BookingID,
+            Label : 'BookingID',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : BookingDate,
+            Label : 'BookingDate',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : BookedFlights,
+            Label : 'BookedFlights',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : BookingStatus_code,
+            Label : 'BookingStatus_code',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : BookingStatus.code,
+            Label : 'code',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : BookingStatus.descr,
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : BookingStatus.name,
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : CurrencyCode_code,
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : FlightDate,
+            Label : 'FlightDate',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : FlightPrice,
+            Label : 'FlightPrice',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : to_Carrier.AirlineID,
+            Label : 'AirlineID',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : to_Customer.City,
+            Label : 'City',
+        },
+    ]
 );
 
