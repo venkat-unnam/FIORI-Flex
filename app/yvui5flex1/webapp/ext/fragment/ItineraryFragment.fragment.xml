@@ -3,6 +3,9 @@
         <!-- <MessageStrip text="All the Booking for the Travel id {TravelID} has been confirmed" showIcon="true"/> -->
         <!-- <Button id="Button" text="ItineraryFragment" press="handler.onPress" /> -->
         <l:Grid hSpacing="1" containerQuery="true" defaultSpan="L6 M6 S12">
+            <l:dependents>
+                <core:Fragment fragmentName="yvui5flex1.ext.fragment.popover" type="XML" />
+            </l:dependents>
             <l:content>
                 <macros:Table metaPath="to_Booking/@UI.LineItem#Itinerary" id="bookingTable"/>
                 <macros:Chart id="Chart" metaPath="@com.sap.vocabularies.UI.v1.Chart#BookingCountByAirline" contextPath="/Travel/to_BookedFlights" personalization="Type,Item" selectionMode="Single" selectionChange="handler.onChartSelectionChange"/>
