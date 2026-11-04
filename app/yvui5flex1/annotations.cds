@@ -1,5 +1,7 @@
 using TravelService as service from '../../srv/travel-service';
 using from '../../db/schema';
+using from '../capabilities';
+
 
 annotate service.Travel with @(
     UI.SelectionFields : [
@@ -281,5 +283,44 @@ annotate service.Booking with @(
             },
         ],
     },
+);
+
+annotate service.BookedFlights with @(
+    UI.Chart #BookingCountByAirline : {
+        $Type : 'UI.ChartDefinitionType',
+        Title : 'All Airline Bookings',
+        ChartType : #Column,
+        Dimensions : [
+            to_Customer_CustomerID,
+            AirlineID,
+        ],
+        DimensionAttributes : [
+            {
+                $Type : 'UI.ChartDimensionAttributeType',
+                Dimension : to_Customer_CustomerID,
+                Role : #Category,
+            },
+            {
+                $Type : 'UI.ChartDimensionAttributeType',
+                Dimension : AirlineID,
+                Role : #Series,
+            },
+        ],
+        DynamicMeasures : [
+            '@Analytics.AggregatedProperty',
+        ],
+        MeasureAttributes : [
+            {
+                $Type : 'UI.ChartMeasureAttributeType',
+                DynamicMeasure : '@Analytics.AggregatedProperty',
+                Role : #Axis1,
+            },
+            {
+                $Type : 'UI.ChartMeasureAttributeType',
+                DynamicMeasure : '',
+                Role : #Axis1,
+            },
+        ],
+    }
 );
 
