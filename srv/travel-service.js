@@ -324,7 +324,8 @@ class TravelService extends cds.ApplicationService {
     const _readBookings = async (context, each) => {
       return await cds
         .tx(context)
-        .read([
+        // .read([
+        .run([
           SELECT`to_Carrier_AirlineID as AirlineID, count(BookingUUID) as BookedFlights`.from(
             Booking
           ).groupBy`to_Customer_CustomerID, to_Carrier_AirlineID`.having({
