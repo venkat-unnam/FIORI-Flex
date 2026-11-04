@@ -189,10 +189,42 @@ class TravelService extends cds.ApplicationService {
     /**
      * Trees-for-Tickets: update totals including green flight fee
      */
+  //   this._update_totalsGreen = async function (req) {
+  //     const [{ TotalPrice }] = await cds.read([
+  //       SELECT.one`TotalPrice, GreenFee`.from(Travel.drafts, req.data.TravelUUID)
+  //     ])
+  //     if (req.data.GoGreen) {
+  //       req.info({
+  //         code: 204,
+  //         message:
+  //           "Trees-4-Tickets: " +
+  //           Math.round(TotalPrice * 0.01, 0) + ' tree plants scheduled',
+  //         numericSeverity: 1
+  //       })
+  //       return UPDATE(Travel.drafts, req.data.TravelUUID).with(`
+  //   TotalPrice = TotalPrice + round (TotalPrice * 0.01, 0),
+  //   GreenFee = round (TotalPrice * 0.01, 0),
+  //   TreesPlanted = round(TotalPrice * 0.01, 0)
+  // `)
+  //     } else {
+  //       this._update_totals4(req.data.TravelUUID)
+  //       return UPDATE(Travel.drafts, req.data.TravelUUID).with(`
+  //     TotalPrice = TotalPrice - GreenFee,
+  //     GreenFee = 0,
+  //     TreesPlanted = 0
+  //   `)
+  //     }
+  //   }
     this._update_totalsGreen = async function (req) {
-      const [{ TotalPrice }] = await cds.read([
-        SELECT.one`TotalPrice, GreenFee`.from(Travel.drafts, req.data.TravelUUID)
-      ])
+      // OLD: const [{ TotalPrice }] = await cds.read([ SELECT.one... ])
+      // NEW: plain SELECT.one; cds.read([...]) with an array crashes the new runtime
+      const row = await SELECT.one`TotalPrice, GreenFee`.from(
+        Travel.drafts,
+        req.data.TravelUUID
+      )
+      if (!row) return // draft not found, nothing to update
+      const { TotalPrice } = row
+
       if (req.data.GoGreen) {
         req.info({
           code: 204,
@@ -207,7 +239,8 @@ class TravelService extends cds.ApplicationService {
     TreesPlanted = round(TotalPrice * 0.01, 0)
   `)
       } else {
-        this._update_totals4(req.data.TravelUUID)
+        // NEW: await, so totals are recalculated before the second UPDATE runs
+        await this._update_totals4(req.data.TravelUUID)
         return UPDATE(Travel.drafts, req.data.TravelUUID).with(`
       TotalPrice = TotalPrice - GreenFee,
       GreenFee = 0,
@@ -215,6 +248,7 @@ class TravelService extends cds.ApplicationService {
     `)
       }
     }
+
 
     /**
      * Trees-forTickets: Set criticality to highlight green flight status in booking table
@@ -321,10 +355,51 @@ class TravelService extends cds.ApplicationService {
     /**
      * Exercise 5: Data for Bookings table micro chart
      */
-    const _readBookings = async (context, each) => {
+    // const _readBookings = async (context, each) => {
+    //   return await cds
+    //     .tx(context)
+    //     // .read([
+    //     .run([
+    //       SELECT`to_Carrier_AirlineID as AirlineID, count(BookingUUID) as BookedFlights`.from(
+    //         Booking
+    //       ).groupBy`to_Customer_CustomerID, to_Carrier_AirlineID`.having({
+    //         to_Customer_CustomerID: each.to_Customer_CustomerID,
+    //       }),
+    //       SELECT`AirlineID, Name`.from(Airline),
+    //     ])
+    // }
+
+    // const _readBookedFlightsSingleAirline = async (bookedFlights, context) => {
+    //   for (const each of bookedFlights) {
+    //     if (each.to_Customer === null) { continue }
+    //     await _readBookings(context, each)
+    //       .then((result) => {
+    //         if (result[0].length > 0 && each.to_Carrier != undefined) {
+    //           var bookings = result[0]
+    //           let booking = bookings.find(obj => obj.AirlineID === each.to_Carrier_AirlineID)
+    //           each.BookedFlights = booking != undefined ? booking.BookedFlights : 0
+
+    //           //Threshold of 5 booked flights reached: set chart color green (3) or red(1)
+    //           each.EligibleForPrime = each.BookedFlights >= each.to_Carrier.VIPCustomerBookings ? 3 : 1
+    //         }
+    //       })
+    //   }
+    // }
+
+    // this.on("READ", "Booking", async (context, next) => {
+    //   var bookings = await next()
+    //   if (bookings != null && context.query.SELECT.columns && (context.query.SELECT.columns.find(c => c.ref[0] === 'BookedFlights'))) {
+    //     if (Array.isArray(bookings)) {
+    //       return await _readBookedFlightsSingleAirline(bookings, context)
+    //     } else {
+    //       return await _readBookedFlightsSingleAirline([bookings], context)
+    //     }
+    //   }
+    //   return bookings
+    // })
+        const _readBookings = async (context, each) => {
       return await cds
         .tx(context)
-        // .read([
         .run([
           SELECT`to_Carrier_AirlineID as AirlineID, count(BookingUUID) as BookedFlights`.from(
             Booking
@@ -350,15 +425,22 @@ class TravelService extends cds.ApplicationService {
             }
           })
       }
+      // NEW: return the rows. The original returned undefined, so the READ
+      // handler below handed nothing back and BookedFlights never reached the UI.
+      return bookedFlights
     }
 
     this.on("READ", "Booking", async (context, next) => {
       var bookings = await next()
-      if (bookings != null && context.query.SELECT.columns && (context.query.SELECT.columns.find(c => c.ref[0] === 'BookedFlights'))) {
+      // NEW: c.ref?.[0] instead of c.ref[0]. Columns like '*' or functions have no
+      // `ref`, and the old code would throw on them.
+      if (bookings != null && context.query.SELECT.columns && (context.query.SELECT.columns.find(c => c.ref?.[0] === 'BookedFlights'))) {
         if (Array.isArray(bookings)) {
           return await _readBookedFlightsSingleAirline(bookings, context)
         } else {
-          return await _readBookedFlightsSingleAirline([bookings], context)
+          // NEW: unwrap the single-row result so the shape matches what next() returned
+          const [single] = await _readBookedFlightsSingleAirline([bookings], context)
+          return single
         }
       }
       return bookings
