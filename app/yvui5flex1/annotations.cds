@@ -111,12 +111,6 @@ annotate service.Travel with @(
             ID : 'Sustainability',
             Target : '@UI.FieldGroup#Sustainability',
         },
-        {
-            $Type : 'UI.ReferenceFacet',
-            Label : 'Itinerary',
-            ID : 'Itinerary',
-            Target : 'to_Booking/@UI.LineItem#Itinerary',
-        },
     ],
     UI.FieldGroup #i18nTravel : {
         $Type : 'UI.FieldGroupType',

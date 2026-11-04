@@ -137,10 +137,17 @@
             "settings": {
               "navigation": {},
               "contextPath": "/Travel",
-              "controlConfiguration": {
-                "to_Booking/@com.sap.vocabularies.UI.v1.LineItem#Itinerary": {
-                  "tableSettings": {
-                    "type": "ResponsiveTable"
+              "content": {
+                "body": {
+                  "sections": {
+                    "ItineraryFragment": {
+                      "template": "yvui5flex1.ext.fragment.ItineraryFragment",
+                      "position": {
+                        "placement": "After",
+                        "anchor": "i18nTravel"
+                      },
+                      "title": "Itinerary"
+                    }
                   }
                 }
               }

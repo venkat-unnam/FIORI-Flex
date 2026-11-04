@@ -1,0 +1,11 @@
+<core:FragmentDefinition xmlns:core="sap.ui.core" xmlns="sap.m" xmlns:macros="sap.fe.macros" xmlns:l="sap.ui.layout">
+	<VBox id="VBox" core:require="{ handler: 'yvui5flex1/ext/fragment/ItineraryFragment'}">
+		<!-- <MessageStrip text="All the Booking for the Travel id {TravelID} has been confirmed" showIcon="true"/> -->
+		<!-- <Button id="Button" text="ItineraryFragment" press="handler.onPress" /> -->
+		<l:Grid hSpacing="1" containerQuery="true">
+        <l:content>
+            <macros:Table metaPath="to_Booking/@UI.LineItem#Itinerary" id="bookingTable" />
+        </l:content>
+    </l:Grid>
+	</VBox>
+</core:FragmentDefinition>
